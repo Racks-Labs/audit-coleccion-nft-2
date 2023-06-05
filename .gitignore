@@ -7,3 +7,7 @@ typechain
 #Hardhat files
 cache
 artifacts
+
+# pdf files
+/report/report-example.pdf
+

@@ -129,12 +129,11 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
         return s_baseTokenURI;
     }
 
-    /////////////////////////////////// Presale ///////////////////////////////////
+    // ---------------------- Presale ------------------------------//
     
     /*
-        @dev possible implementations for the NFT 
+        @dev possible implementations for the NFT collection
     */
-
     // this is 2^256 - 1
     uint256 private constant MAX_INT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
