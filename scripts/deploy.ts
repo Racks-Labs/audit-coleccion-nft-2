@@ -15,10 +15,8 @@ async function main() {
   const collection = await collectionFactory.deploy(baseUri); // put the constructor arguments here if there are any.
 
   await collection.deployed();
-
   console.log("Greeter deployed to:", collection.address);
 }
-
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {
