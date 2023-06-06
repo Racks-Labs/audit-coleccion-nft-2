@@ -129,34 +129,45 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
         return s_baseTokenURI;
     }
 
+    // This contract is a Proof of Concept (POC) for a presale of a non-fungible token (NFT) collection.
+    // It's important to note that this is a possible implementation and may need adjustments based on specific requirements.
     // ---------------------- Presale ------------------------------//
-    
-    /*
-        @dev possible implementations for the NFT collection
-    */
-    // this is 2^256 - 1
+    /** 
+        @dev Possible implementation for the NFT collection presale
+    **/
+
+    // ! pseudo code -> not tested
+    // Maximum possible integer value (2^256 - 1) --> all the bits set to 1
     uint256 private constant MAX_INT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-    // up to 256 * 3 = 768 tickets
-    // one to store 300 only
-    // this is an example for a 256 * 2 = 512 tickets
+
+    // Array to store ticket information. This example allows for 512 tickets (256 * 2)
     uint256[2] private arr = [MAX_INT, MAX_INT];
 
+    // Function to handle the presale of tickets
     function presale(
         bytes calldata signature,
         uint256 ticketNumber
     ) public payable {
+        // Verify the signature
         require(
             verifySig(msg.sender, ticketNumber, signature),
             "invalid signature"
         );
-        if (msg.value < s_mintPrice * _amount) {
+
+        // Check if the sent value is enough to mint the desired amount of tokens
+        if (msg.value < s_mintPrice) {
             revert MarAbiertoToken__InsufficientETHAmount();
         }
+
+        // Claim the ticket or block the transaction if the ticket is already claimed
         claimTicketOrBlockTransaction(ticketNumber);
+
+        // Mint the token
         _mint(msg.sender, ticketNumber);
     }
 
+    // Function to claim a ticket or block the transaction if the ticket is already claimed
     function claimTicketOrBlockTransaction(uint256 ticketNumber) internal {
         require(ticketNumber < arr.length * 256, "too large");
         uint256 storageOffset = ticketNumber / 256;
@@ -170,6 +181,7 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
             ~(uint256(1) << offsetWithin256);
     }
 
+    // Function to verify the signature
     function verifySig(
         address _address,
         uint256 _ticketNumber,
@@ -185,6 +197,7 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
         return (_address == recoveredAddress);
     }
 
+    // Function to recover the signer's address from the signature
     function recover(
         bytes32 hash,
         bytes memory signature
@@ -199,7 +212,6 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
         }
 
         // Divide the signature into r, s and v variables
-        // solhint-disable-next-line no-inline-assembly
         assembly {
             r := mload(add(signature, 0x20))
             s := mload(add(signature, 0x40))
@@ -219,4 +231,5 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
             return ecrecover(hash, v, r, s);
         }
     }
+    // ---------------------- Presale ------------------------------//
 }
