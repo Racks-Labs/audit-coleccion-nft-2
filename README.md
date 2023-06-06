@@ -1,4 +1,4 @@
-# Project Title - Testing Documentation
+# Mar Abierto Audit by Racks Labs - Testing Documentation
 
 ## Table of Contents
 
@@ -10,7 +10,7 @@
 <a name="introduction"></a>
 ## Introduction
 
-This document provides guidelines for running various tests in our system. These include unit tests and invariant/fuzzing tests.
+This document provides guidelines for running various tests in our system. These include unit tests and fuzzing tests.
 
 <a name="running-the-tests"></a>
 ## Running the Tests
@@ -22,9 +22,9 @@ The commands mentioned in the following sections will guide you on how to run ou
 
 We use [Hardhat](https://hardhat.org/) for unit testing. To run these tests, simply execute the following command:
 
-\`\`\`bash
+```bash
 npx hardhat test
-\`\`\`
+```
 
 <a name="fuzzing-tests-with-echidna"></a>
 ## Fuzzing Tests with Echidna
@@ -37,8 +37,8 @@ Echidna is used for performing invariant and fuzzing tests. It checks unusual co
 
 To run the Echidna tests, use the following commands:
 
-\`\`\`bash
+```bash
 docker run -it --rm -v $PWD:/code trailofbits/eth-security-toolbox
 cd /code/report/Echidna
 echidna-test contracts/TestEchidnaFlatten.sol --contract TestMarAbiertoToken
-\`\`\`
+```
