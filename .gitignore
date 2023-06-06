@@ -7,3 +7,12 @@ typechain
 #Hardhat files
 cache
 artifacts
+
+.prettierrc
+.prettierignore
+static.md
+.solhint.json
+.eslintignore
+.eslintrc.js
+
+gas-report.txt
