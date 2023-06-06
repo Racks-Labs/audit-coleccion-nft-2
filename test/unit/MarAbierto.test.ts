@@ -90,7 +90,7 @@ describe("MarAbierto", function () {
         })
         it("Should revert if not enough value", async function () {
             const { NFTContract, owner } = await loadFixture(MarAbiertoFixture);
-            await expect(NFTContract.connect(owner).mint(owner.address, {value: MINT_PRICE.sub(1)})).to.be.revertedWith("MarAbiertoToken__InsufficientETHAmount");
+            await expect(NFTContract.connect(owner).mint(owner.address, {value: MINT_PRICE.sub(1)})).to.be.revertedWithCustomError(NFTContract, "MarAbiertoToken__InsufficientETHAmount");
         })
         it("Should revert if not enough supply", async function () {
             const { NFTContract, owner } = await loadFixture(MarAbiertoFixture);
@@ -98,7 +98,7 @@ describe("MarAbierto", function () {
             for (let i = 0; i < Number(supply); i++) {
                 await NFTContract.connect(owner).mint(owner.address, {value: MINT_PRICE});
             }
-            await expect(NFTContract.connect(owner).mint(owner.address, {value: MINT_PRICE})).to.be.revertedWith("MarAbiertoToken__AllTokensAreMinted");
+            await expect(NFTContract.connect(owner).mint(owner.address, {value: MINT_PRICE})).to.be.revertedWithCustomError(NFTContract, "MarAbiertoToken__AllTokensAreMinted");
         })
         it("Should increase tokenId counter", async function () {
             const { NFTContract, owner } = await loadFixture(MarAbiertoFixture);
@@ -106,8 +106,8 @@ describe("MarAbierto", function () {
             expect(Number(await ethers.provider.getStorageAt(NFTContract.address, 7))).to.equal(1);
         })
         it("Reverts if contract calling doesn't implement onERC721Received", async function () {
-            const { NFTContract, nftReceiver, noNFTReceiver, owner } = await loadFixture(MarAbiertoFixture);
-            await expect(noNFTReceiver.mint()).to.be.revertedWith("NoNFTReceiver__MintFailed");
+            const { NFTContract, nftReceiver, noNFTReceiver } = await loadFixture(MarAbiertoFixture);
+            await expect(noNFTReceiver.mint()).to.be.revertedWithCustomError(noNFTReceiver, "NoNFTReceiver__MintFailed");
             await expect(nftReceiver.mint()).to.not.be.reverted;
             expect(await NFTContract.balanceOf(nftReceiver.address)).to.equal(1);
         })
@@ -121,7 +121,7 @@ describe("MarAbierto", function () {
         })
         it("Should revert if not enough value", async function () {
             const { NFTContract } = await loadFixture(MarAbiertoFixture);
-            await expect(NFTContract.mintAmount(2, {value: MINT_PRICE.mul(2).sub(1)})).to.be.revertedWith("MarAbiertoToken__InsufficientETHAmount");
+            await expect(NFTContract.mintAmount(2, {value: MINT_PRICE.mul(2).sub(1)})).to.be.revertedWithCustomError(NFTContract, "MarAbiertoToken__InsufficientETHAmount");
         })
     })
 
