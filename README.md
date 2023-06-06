@@ -1,30 +1,44 @@
-## Requisitos cliente
+# Project Title - Testing Documentation
 
-Es una colección NFT de 1440 piezas en ETH. El nombre Smart Contract: MAR ABIERTO NON FUNGIBLE TIME
-Acrónimo: MANF
-Royalties: 5% -> En marketplace Open Sea
-Minteo: Hay 3 fases
--Team interno Croonos: Hay que enviar 140 NFT en orden a la wallet. Falta wallet de envio
--Free mint: 300 nft que mintearan en la web, es como una private sale pero gratis, solo pagarán el gas fee .Limite de NFTs por wallet de 3. Falta listado de wallets.
--Public Mint: 1000 NFT a 0,08 ETH
+## Table of Contents
 
-No pueden aparecer las properties hasta que se haga el reveal
+1. [Introduction](#introduction)
+2. [Running the Tests](#running-the-tests)
+3. [Unit Tests with Hardhat](#unit-tests-with-hardhat)
+4. [Fuzzing Tests with Echidna](#fuzzing-tests-with-echidna)
 
-Wallet madre colección/contrato: 0x50Def171796AF77Fb9313B35BF9cDd3bCd1Ff690
+<a name="introduction"></a>
+## Introduction
 
-Wallets para sacar los fondos del smart contract (necesitan que firmen si o si las 2 wallets, si solo firma 1 no se puede sacar el dinero):
-0x09b6584de8b5DAd1b60ec1c447DD6F11e6B2198a
-0x8Dd6AeF76c8A8Bc24e8F3EDF88Dc38f164C546c5
+This document provides guidelines for running various tests in our system. These include unit tests and invariant/fuzzing tests.
 
-Es un proyecto un poco especial, por lo que en Open Sea, una vez minteado los 1440 NFT, si la gente lo filtra por Oldest y lo ponen en formato mosaico, tienen que ir en orden de los NFT desde el 1 al 1440, ya que formaran un collage todos juntos.
+<a name="running-the-tests"></a>
+## Running the Tests
 
-## Flujo de trabajo
+The commands mentioned in the following sections will guide you on how to run our automated testing suite.
 
-- Testear que la funcionalidad core requerida funciona como esta planteado
+<a name="unit-tests-with-hardhat"></a>
+## Unit Tests with Hardhat
 
-  - unit test para cada funcionalidad
-  - testear en opensea testnet y hacer captura de que los nft se muestran en orden
-  - documento de posibles mejoras de funcionalidad
-    ( merkle tree para whitelist, estandar 2981 para royalties... )
+We use [Hardhat](https://hardhat.org/) for unit testing. To run these tests, simply execute the following command:
 
-- Revision conjunta antes de enviar documento al cliente
+\`\`\`bash
+npx hardhat test
+\`\`\`
+
+<a name="fuzzing-tests-with-echidna"></a>
+## Fuzzing Tests with Echidna
+
+Echidna is used for performing invariant and fuzzing tests. It checks unusual combinations of function calls to verify if the invariant function, which should always hold true, fails under any circumstances.
+
+**Note**: These tests are not deterministic, which means they may occasionally fail. The objective here is not to test for authorization but to ensure that the contract is secure against reentrancy attacks, overflows, and similar issues.
+
+**Prerequisite**: Docker must be installed and running on your machine.
+
+To run the Echidna tests, use the following commands:
+
+\`\`\`bash
+docker run -it --rm -v $PWD:/code trailofbits/eth-security-toolbox
+cd /code/report/Echidna
+echidna-test contracts/TestEchidnaFlatten.sol --contract TestMarAbiertoToken
+\`\`\`
