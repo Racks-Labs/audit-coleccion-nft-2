@@ -30,6 +30,7 @@
    - [Low](#low)
 5. [Gas Optimization](#gas)
 6. [Possible Improvements](#improvements)
+7. [Conclusions](#conclusions)
 
 ---
 
@@ -171,7 +172,7 @@ File: contracts/MarAbiertoToken.sol
 ```
 
 ## Possible Improvements <a name="improvements"></a>
-*Check the presale POC for the whitelist implementation*
+*Check the presale POC on the repository for the whitelist implementation.*
 
 ***[Could use ERC-2891 for royalties](https://docs.opensea.io/docs/part-3-set-your-drop-earnings#creator-earnings)**: Would make your royalties on by the following function interface:*
 ```solidity
@@ -191,10 +192,25 @@ Note: *The ether returned should not be lower than the explicit gas cost of the 
 ***Access Control**: You're using the Ownable contract from OpenZeppelin, which is a good start. However, you might want to consider more granular access control. For example, you could have separate roles for minting tokens and changing contract parameters. You could use something like OwnableRoles from OpenZeppelin.*
 
 ***First mint phase**: You can set a batch mint of the 140 NFT to the desired wallet in the constructor. This would setup the first minting phase just on the deployment of the entire smart contract.*
-*Gas costs would be prohibitive, we recommend using the **[ERC721A](https://github.com/chiru-labs/ERC721A)** implementation, which would make batch minting costs, closer to O(1), not ~O(n), as it is currently implemented. This would lead to massive gas costs, up to hundred of $.*
+*Gas costs would be prohibitive, we recommend using the **[ERC721A](https://github.com/chiru-labs/ERC721A)** implementation, which would make batch minting costs, closer to O(1), not ~O(n), as it is currently implemented. This would lead to massive gas costs savings, up to hundred of $.  
+The only gas-related problem that ERC721A could involve are the first transfer of an NFT, which would double in cost, but subsequent ones would be slightly lower.*  
+*The ERC721A is efficient with whitelisting and can set the number of NFT each address can mint in the presale, this would lower minting costs up to 80%.*
 *Also be aware that your current supply is limited to 50 if you want to follow this improvement.*
 
 ***Second mint phase**: 
 For the whitelist you can centralize it with your database gathering the addresses on a ¿form?, or make it permisionless with a Merkle Tree or public signatures.
-You can set a bitmap to see if the user is on the presale list, and track how many NFT (max limit of 3) they have minted on a per-user basis using bits or leveraging ERC721A `uint128 numberMinted` inside the `AddressData`.*
-*This has the potential to reduce user gas cost for minting up to 90%.
+You can set a bitmap to see if the user is on the presale list, and track how many NFT (max limit of 3) they have minted on a per-user basis using bits or leveraging [ERC721A Aux](https://chiru-labs.github.io/ERC721A/#/tips?id=aux).*
+*This has the potential to reduce user gas cost for minting up to 80%.*
+
+## Conclusions <a name="conclusions"></a>
+
+Overall, the contract is standard and pretty straightforward, with not many pain points. However, there is significant room for improvement in terms of gas efficiency. If this is not addressed, it will impact the revenue of the collection owners and result in higher gas fees for the buyers/holders.
+
+
+An ERC721A implementation would:  
+* Save an estimated ~$600 in gas costs in the first mint phase  
+* Save mint gas required in the presale phase  
+(from a 2% to 80% depending of how many NFT they mint)  
+* Natively implement whitelisting functionalities  
+(not as gas efficient as a bitmap or public signatures, but close to them and easier to implement)  
+* The only drawback would the first transfer gas cost  
