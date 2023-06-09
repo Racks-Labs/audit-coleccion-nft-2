@@ -2000,7 +2000,7 @@ contract MarAbiertoTokenTest  {
     function echidna_test_mint() public returns (bool) {
         uint256 tokenId = mar.currentTokenId();
         mar.enablePublicMinting();
-        mar.mint(msg.sender);
+        mar.mint{value: 0.1 ether}(msg.sender);
         return tokenId + 1 == mar.currentTokenId();
     }
 
