@@ -1733,62 +1733,86 @@ library Counters {
 
 pragma solidity ^0.8.8;
 
-/**
-    @dev Interface of the ERC721 standard as defined in the EIP.
-    @dev This contract is for testing purposes only. Do not use it in production.
-    @dev Changes have been made in order ot Echidna to work.
-**/
-
-
-
 //Errors
 error MarAbiertoToken__AllTokensAreMinted();
-error MarAbiertoToken__CannotMintLegendaryNFT();
 error MarAbiertoToken__InsufficientETHAmount();
-
-// Implementar estandar ERC2981 
+error MarAbiertoToken__AmountExceedsLimit();
+error MarAbiertoToken__PresaleIsNotAvalible();
 
 contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
     using Counters for Counters.Counter;
 
-    /** 
-     * @dev Token ID counter.
-    **/
-
     Counters.Counter private s_tokenIdCounter;
-    uint256 private s_supply = 50;
-    uint256 private s_mintPrice = 0.1 ether;
+    uint256 private s_supply = 1440;
+    uint256 private s_mintPrice = 0.08 ether;
+    uint256 private s_signatures = 0;
+    uint256 constant MIN_SIGNATURES = 2;
+    address private s_withdrawAddress;
     string private s_baseTokenURI;
+    string private s_prerevealTokenURI;
+
+    bool private s_isRevealed = false;
+    bool private s_isPublicMintEnabled = false;
+    bool private s_isPresaleMintEnabled = false;
+
+    mapping(address => bool) private s_owners;
+    mapping(address => bool) public whitelist;
+
+    modifier validOwner() {
+        require(s_owners[msg.sender] == true);
+        _;
+    }
 
     event NftMinted(uint256 indexed tokenId, address minter);
+    event WithdrawFunds(address from, uint256 amount);
 
-    constructor(string memory baseURI) ERC721("MarAbierto", "MAR") {
-        setBaseURI(baseURI);
+    constructor(
+        string memory prerevealTokenURI,
+        address _withdrawAddress
+    ) ERC721("MAR ABIERTO NON FUNGIBLE TIME", "MANF") {
+        addOwner(msg.sender);
+        setPrerevealTokenURI(prerevealTokenURI);
+        s_withdrawAddress = _withdrawAddress;
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
         return s_baseTokenURI;
     }
 
-    /**
-     * @dev OnlyOwner is not set because this function is for testing purposes only.
-     */
-    function setBaseURI(string memory _baseTokenURI) public {
+    function setBaseURI(string memory _baseTokenURI) public onlyOwner {
         s_baseTokenURI = _baseTokenURI;
     }
 
-    function addSupply(uint256 _amount) public onlyOwner {
-        s_supply += _amount;
+    function tokenURI(uint256 _tokenId) public view virtual override returns (string memory) {
+        if (s_isRevealed) {
+            return super.tokenURI(_tokenId);
+        }
+        return s_prerevealTokenURI;
     }
 
-    /**
-     * @dev OnlyOwner is not set because this function is for testing purposes only.
-     */
-    function setMintPrice(uint256 _newMintPrice) public {
+    function setPrerevealTokenURI(string memory _prerevealTokenURI) public onlyOwner {
+        s_prerevealTokenURI = _prerevealTokenURI;
+    }
+
+    function setMintPrice(uint256 _newMintPrice) public onlyOwner {
         s_mintPrice = _newMintPrice;
     }
 
+    function addAddressesToWhitelist(address[] memory addrs) public onlyOwner {
+        for (uint256 i = 0; i < addrs.length; i++) {
+            whitelist[addrs[i]] = true;
+        }
+    }
+
+    function removeAddressesFromWhitelist(address[] memory addrs) public onlyOwner {
+        for (uint256 i = 0; i < addrs.length; i++) {
+            whitelist[addrs[i]] = false;
+        }
+    }
+
     function mint(address to) public payable {
+        require(s_isPublicMintEnabled, "Public minting is not currently enabled.");
+
         if (s_tokenIdCounter.current() >= s_supply) {
             revert MarAbiertoToken__AllTokensAreMinted();
         }
@@ -1806,23 +1830,56 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
     }
 
     function mintAmount(uint256 _amount) public payable {
+        require(s_isPublicMintEnabled, "Public minting is not currently enabled.");
+
         if (msg.value < s_mintPrice * _amount) {
             revert MarAbiertoToken__InsufficientETHAmount();
         }
+
         for (uint256 i = 0; i < _amount; i++) {
             mint(msg.sender);
         }
     }
 
-    /**
-     * @dev OnlyOwner is not set because this function is for testing purposes only.
-     */
-    function mintOwner(address to) public payable  {
+    function mintPresale(address to) public payable {
+        if (!s_isPresaleMintEnabled || !whitelist[msg.sender]) {
+            revert MarAbiertoToken__PresaleIsNotAvalible();
+        }
+
+        if (s_tokenIdCounter.current() >= 300) {
+            revert MarAbiertoToken__AllTokensAreMinted();
+        }
+
+        uint256 tokenId = s_tokenIdCounter.current();
+        s_tokenIdCounter.increment();
+
+        _safeMint(to, tokenId);
+
+        whitelist[msg.sender] = false;
+
+        emit NftMinted(tokenId, msg.sender);
+    }
+
+    function mintAmountPresale(uint256 _amount) public payable {
+        if (!s_isPresaleMintEnabled || !whitelist[msg.sender]) {
+            revert MarAbiertoToken__PresaleIsNotAvalible();
+        }
+
+        if (_amount > 3) {
+            revert MarAbiertoToken__AmountExceedsLimit();
+        }
+
+        for (uint256 i = 0; i < _amount; i++) {
+            mint(msg.sender);
+        }
+    }
+
+    function mintOwner(address to) public payable onlyOwner {
         if (s_tokenIdCounter.current() >= s_supply) {
             revert MarAbiertoToken__AllTokensAreMinted();
         }
 
-        uint256 tokenId =  s_tokenIdCounter.current();
+        uint256 tokenId = s_tokenIdCounter.current();
         s_tokenIdCounter.increment();
 
         _safeMint(to, tokenId);
@@ -1836,12 +1893,18 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
         }
     }
 
-    function withdraw() public payable onlyOwner {
+    function withdraw() public payable validOwner {
+        if (s_signatures != MIN_SIGNATURES) {
+            s_signatures++;
+        }
+
         uint256 balance = address(this).balance;
         require(balance > 0, "No ether left to withdraw");
 
-        (bool success, ) = (msg.sender).call{value: balance}("");
+        (bool success, ) = (s_withdrawAddress).call{value: balance}("");
         require(success, "Transfer failed.");
+
+        s_signatures = 0;
     }
 
     function pause() public onlyOwner {
@@ -1850,6 +1913,27 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
 
     function unpause() public onlyOwner {
         _unpause();
+    }
+
+    function revealAndSetBaseURI(string memory _baseTokenURI) public onlyOwner {
+        s_isRevealed = true;
+        s_baseTokenURI = _baseTokenURI;
+    }
+
+    function enablePublicMinting() external onlyOwner {
+        s_isPublicMintEnabled = true;
+    }
+
+    function disablePublicMinting() external onlyOwner {
+        s_isPublicMintEnabled = false;
+    }
+
+    function enablePresaleMinting() external onlyOwner {
+        s_isPresaleMintEnabled = true;
+    }
+
+    function disablePresaleMinting() external onlyOwner {
+        s_isPresaleMintEnabled = false;
     }
 
     // An override that disables the transfer of NFTs if the smartcontract is paused
@@ -1862,12 +1946,12 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
-    function getIdCounter() public view returns (uint256) {
-        return s_tokenIdCounter.current();
-    }
-
     function getSupply() public view returns (uint256) {
         return s_supply;
+    }
+
+    function currentTokenId() public view returns (uint256) {
+        return s_tokenIdCounter.current();
     }
 
     function getPrice() public view returns (uint256) {
@@ -1877,48 +1961,78 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
     function getBaseURI() public view returns (string memory) {
         return s_baseTokenURI;
     }
+
+    function addOwner(address _newOwner) public onlyOwner {
+        s_owners[_newOwner] = true;
+    }
+
+    function removeOwner(address _oldOwner) public onlyOwner {
+        s_owners[_oldOwner] = false;
+    }
+
+    function getBalance() public view onlyOwner returns (uint256) {
+        return address(this).balance;
+    }
+
+    fallback() external payable {}
+
+    receive() external payable {}
 }
+
 
 
 // File contracts/TestEchidna.sol
 
 pragma solidity ^0.8.8;
 
-contract TestMarAbiertoToken is MarAbiertoToken {
-    constructor() MarAbiertoToken("https://mytoken.com/") {
-        // Owner can mint tokens freely for testing
-        for (uint i = 0; i < 10; i++) {
-            mintOwner(msg.sender);
-        }
+
+contract MarAbiertoTokenTest {
+    MarAbiertoToken mar;
+
+    string public constant baseURI =
+        "https://ipfs.io/ipfs/bafybeifl4qyr35poz6pa57t6mq73dhk23ysfaiuprlqtvh6iag7ndldbpe/";
+
+    constructor() {
+        mar = new MarAbiertoToken(baseURI, address(this));
+        mar.enablePublicMinting();
+        mar.enablePresaleMinting();
+        mar.addOwner(address(this));
+        mar.addOwner(msg.sender);
+        address[] memory whitelisted = new address[](2);
+        whitelisted[0] = address(this);
+        whitelisted[1] = msg.sender;
+        mar.addAddressesToWhitelist(whitelisted);
     }
 
-    // Property 1: After calling `mint`, the total supply of tokens should be increased by one.
-    function echidna_test_mint_increases_supply() public returns (bool) {
-        uint256 supplyBefore =  getIdCounter();
-        mintOwner(msg.sender);
-        uint256 supplyAfter = getIdCounter();
-        return supplyAfter == supplyBefore + 1;
+    // test mint
+    function echidna_test_ownerMint() public returns (bool) {
+        uint256 tokenId = mar.currentTokenId();
+        mar.mintOwner(msg.sender);
+        return (tokenId + 1 == mar.currentTokenId());
     }
 
-    // Property 2: After calling `mint`, the balance of the minter should be increased by one.
-    function echidna_test_mint_increases_balance() public returns (bool) {
-        uint256 balanceBefore = balanceOf(msg.sender);
-        mintOwner(msg.sender);
-        uint256 balanceAfter = balanceOf(msg.sender);
-        return balanceAfter == balanceBefore + 1;
+    // test add whitelist
+    function echidna_test_addWhitelist() public view returns (bool) {
+        return (mar.whitelist(address(this)));
     }
 
-    // Property 4: After calling `setMintPrice`, the new mint price should be the same as the value passed to the function.
-    function echidna_test_set_mint_price() public returns (bool) {
-        uint256 newPrice = 0.2 ether;
-        setMintPrice(newPrice);
-        return getPrice() == newPrice;
+    // test mint presale
+    function echidna_test_whitelistMinting() public returns (bool) {
+        uint256 tokenId = mar.currentTokenId();
+        mar.mintPresale(msg.sender);
+        return (tokenId + 1 == mar.currentTokenId());
     }
 
-    // Property 5: After calling `setBaseURI`, the new base URI should be the same as the value passed to the function.
-    function echidna_test_set_base_URI() public returns (bool) {
-        string memory newURI = "https://newtoken.com/";
-        setBaseURI(newURI);
-        return keccak256(bytes(getBaseURI())) == keccak256(bytes(newURI));
+    // the owner is the contract
+    function echidna_test_isOwner() public view returns (bool) {
+        return mar.owner() == address(this);
+    }
+
+    // test owner set okay
+    function echidna_test_owner() public returns (bool) {
+        mar.mintOwner(msg.sender);
+        address owner = mar.ownerOf(mar.currentTokenId() - 1);
+        return (owner == msg.sender);
     }
 }
+

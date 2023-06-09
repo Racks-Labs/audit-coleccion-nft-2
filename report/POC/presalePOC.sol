@@ -16,7 +16,7 @@ error MarAbiertoToken__InsufficientETHAmount();
 
 // this is an implementation for sabing gass
 
-contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
+contract MarAbiertoTokenPresalePOC is ERC721, Pausable, Ownable, ERC721Burnable {
     using Counters for Counters.Counter;
 
     Counters.Counter private s_tokenIdCounter;

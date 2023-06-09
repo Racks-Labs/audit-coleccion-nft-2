@@ -5,12 +5,18 @@
 1. [Introduction](#introduction)
 2. [Running the Tests](#running-the-tests)
 3. [Unit Tests with Hardhat](#unit-tests-with-hardhat)
-4. [Fuzzing Tests with Echidna](#fuzzing-tests-with-echidna)
+4. [Reentrancy POC with Hardhat](#reentrancy-poc-with-hardhat)
+5. [Fuzzing Tests with Echidna](#fuzzing-tests-with-echidna)
 
 <a name="introduction"></a>
 ## Introduction
 
-This document provides guidelines for running various tests in our system. These include unit tests and fuzzing tests.
+This document provides guidelines for running various tests in our system. These include unit tests, POC and fuzzing tests.
+
+You can find the **Audit Report** and **OpenSea Testnet Report** in the `report/` directory.
+And you can find both POC (Whitelist optimzation and ReentrancyAttack mock) in the `report/POC` directory.
+
+The unic testing is present in the `test/unit/` folder, and the fuzzing in the `report/Echidna`.
 
 <a name="running-the-tests"></a>
 ## Running the Tests
@@ -24,6 +30,13 @@ We use [Hardhat](https://hardhat.org/) for unit testing. To run these tests, sim
 
 ```bash
 npx hardhat test
+```
+
+<a name="unit-tests-with-hardhat"></a>
+## Reentrancy POC with Hardhat
+
+```bash
+npx hardhat test --grep "MarAbiertoToken Reentrancy POC"
 ```
 
 <a name="fuzzing-tests-with-echidna"></a>
