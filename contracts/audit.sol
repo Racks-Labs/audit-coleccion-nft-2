@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
 
+
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -17,7 +18,6 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
     using Counters for Counters.Counter;
 
     Counters.Counter private s_tokenIdCounter;
-    // could be a constant
     uint256 private s_supply = 1440;
     uint256 private s_mintPrice = 0.08 ether;
     uint256 private s_signatures = 0;
@@ -117,7 +117,7 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
 
     function mintPresale(address to) public payable {
         if (!s_isPresaleMintEnabled || !whitelist[msg.sender]) {
-            revert MarAbiertoToken__PresaleIsNotAvalible(); // typo
+            revert MarAbiertoToken__PresaleIsNotAvalible();
         }
 
         if (s_tokenIdCounter.current() >= 300) {
@@ -155,7 +155,7 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
 
         uint256 tokenId = s_tokenIdCounter.current();
         s_tokenIdCounter.increment();
-        // possive reentrancy
+
         _safeMint(to, tokenId);
 
         emit NftMinted(tokenId, msg.sender);
