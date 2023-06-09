@@ -53,6 +53,18 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MarAbiertoToken__factory>;
     getContractFactory(
+      name: "MarAbiertoTokenPresalePOC",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MarAbiertoTokenPresalePOC__factory>;
+    getContractFactory(
+      name: "MarAbiertoTokenI",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MarAbiertoTokenI__factory>;
+    getContractFactory(
+      name: "ReentrancyAttack",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ReentrancyAttack__factory>;
+    getContractFactory(
       name: "IERC721",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC721__factory>;
@@ -115,6 +127,21 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.MarAbiertoToken>;
+    getContractAt(
+      name: "MarAbiertoTokenPresalePOC",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MarAbiertoTokenPresalePOC>;
+    getContractAt(
+      name: "MarAbiertoTokenI",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MarAbiertoTokenI>;
+    getContractAt(
+      name: "ReentrancyAttack",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ReentrancyAttack>;
     getContractAt(
       name: "IERC721",
       address: string,

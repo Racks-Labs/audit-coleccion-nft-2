@@ -1986,43 +1986,53 @@ contract MarAbiertoToken is ERC721, Pausable, Ownable, ERC721Burnable {
 pragma solidity ^0.8.8;
 
 
-contract MarAbiertoTokenTest  {
-
+contract MarAbiertoTokenTest {
     MarAbiertoToken mar;
 
-    string constant public baseURI = "https://ipfs.io/ipfs/bafybeifl4qyr35poz6pa57t6mq73dhk23ysfaiuprlqtvh6iag7ndldbpe/";
+    string public constant baseURI =
+        "https://ipfs.io/ipfs/bafybeifl4qyr35poz6pa57t6mq73dhk23ysfaiuprlqtvh6iag7ndldbpe/";
 
-    constructor () {
+    constructor() {
         mar = new MarAbiertoToken(baseURI, address(this));
+        mar.enablePublicMinting();
+        mar.enablePresaleMinting();
+        mar.addOwner(address(this));
+        mar.addOwner(msg.sender);
+        address[] memory whitelisted = new address[](2);
+        whitelisted[0] = address(this);
+        whitelisted[1] = msg.sender;
+        mar.addAddressesToWhitelist(whitelisted);
     }
 
     // test mint
-    function echidna_test_mint() public returns (bool) {
+    function echidna_test_ownerMint() public returns (bool) {
         uint256 tokenId = mar.currentTokenId();
-        mar.enablePublicMinting();
-        mar.mint(msg.sender);
-        return tokenId + 1 == mar.currentTokenId();
+        mar.mintOwner(msg.sender);
+        return (tokenId + 1 == mar.currentTokenId());
     }
 
     // test add whitelist
-    function echidna_test_add_whitelist() public returns (bool) {
-        address[] memory whitelisted;
-        whitelisted[0] = msg.sender;
-        mar.addAddressesToWhitelist(whitelisted);
-        return mar.whitelist(msg.sender);
+    function echidna_test_addWhitelist() public view returns (bool) {
+        return (mar.whitelist(address(this)));
     }
 
     // test mint presale
-    function echidna_test_whitelist_minting() public returns (bool) {
-        address[] memory whitelisted;
-        whitelisted[0] = msg.sender;
+    function echidna_test_whitelistMinting() public returns (bool) {
         uint256 tokenId = mar.currentTokenId();
-        mar.addAddressesToWhitelist(whitelisted);
-        mar.enablePresaleMinting();
         mar.mintPresale(msg.sender);
-        return tokenId + 1 == mar.currentTokenId();
+        return (tokenId + 1 == mar.currentTokenId());
     }
 
+    // the owner is the contract
+    function echidna_test_isOwner() public view returns (bool) {
+        return mar.owner() == address(this);
+    }
 
+    // test owner set okay
+    function echidna_test_owner() public returns (bool) {
+        mar.mintOwner(msg.sender);
+        address owner = mar.ownerOf(mar.currentTokenId() - 1);
+        return (owner == msg.sender);
+    }
 }
 

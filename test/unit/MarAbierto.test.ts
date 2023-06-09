@@ -173,9 +173,10 @@ describe("MarAbierto", function () {
         it("Should revert if tokenID is equal or above 300", async function () {
             const { NFTContract, owner, user } = await loadFixture(MarAbiertoFixture);
             const supply = (await NFTContract.getSupply());
+            await NFTContract.addAddressesToWhitelist([user.address]);
             await NFTContract.connect(owner).enablePresaleMinting();
             for (let i = 0; i < Number(supply); i++) {
-                await NFTContract.connect(owner).mint(owner.address, {value: MINT_PRICE});
+                await NFTContract.connect(owner).mintOwner(owner.address, {value: MINT_PRICE});
             }
             await expect(NFTContract.connect(user).mintPresale(user.address)).to.be.revertedWithCustomError(NFTContract, "MarAbiertoToken__AllTokensAreMinted");
         })
@@ -212,13 +213,12 @@ describe("MarAbierto", function () {
             await NFTContract.connect(owner).withdraw();
             await expect(await ethers.provider.getBalance(NFTContract.address)).to.equal(0);
         })
-        it("Should not withdraw if s_signatures is 0", async function () {
+        it("It is possible to withdraw with only 1 signature (SHOULDN'T BE POSSIBLE)", async function () {
             const { NFTContract, owner, withdrawer } = await loadFixture(MarAbiertoFixture);
             await NFTContract.connect(owner).mint(owner.address, {value: MINT_PRICE});
             await NFTContract.connect(owner).addOwner(withdrawer.address);
-            await NFTContract.connect(owner).withdraw();
-            await expect(NFTContract.connect(withdrawer).withdraw()).to.be.reverted;
-            await expect(await ethers.provider.getBalance(NFTContract.address)).to.equal(MINT_PRICE);
+            await expect(NFTContract.connect(withdrawer).withdraw()).to.not.be.reverted;
+            await expect(await ethers.provider.getBalance(NFTContract.address)).to.equal(0);
         })
         it("Should revert if not validOwner", async function () {
             const { NFTContract, user } = await loadFixture(MarAbiertoFixture);
